@@ -1,4 +1,2 @@
-https://fastly.jsdelivr.net/gh/Huibq/keep-alive/Music_Free/myPlugins.json
-https://gitee.com/maotoumao/MusicFreePlugins/raw/master/plugins.json
-https://musicfreepluginshub.2020818.xyz/plugins.json
-https://gitlab.com/acoolbook/musicfree/-/raw/main/music.json
+{"plugins":[{"name":"小秋音乐","url":"https://fastly.jsdelivr.net/gh/Huibq/keep-alive/Music_Free/xiaoqiu.js","version":"0.3.0"},{"name":"小蜗音乐","url":"https://fastly.jsdelivr.net/gh/Huibq/keep-alive/Music_Free/xiaowo.js","version":"0.3.0"},{"name":"小芸音乐","url":"https://fastly.jsdelivr.net/gh/Huibq/keep-alive/Music_Free/xiaoyun.js","version":"0.3.0"},{"name":"小枸音乐","url":"https://fastly.jsdelivr.net/gh/Huibq/keep-alive/Music_Free/xiaogou.js","version":"0.3.0"},{"name":"小蜜音乐","url":"https://fastly.jsdelivr.net/gh/Huibq/keep-alive/Music_Free/xiaomi.js","version":"0.3.0"}]}
+
