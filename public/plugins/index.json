@@ -1,0 +1,28 @@
+{
+  "plugins": [
+    {
+      "name": "网易云音乐",
+      "url": "/plugins/netease.json",
+      "version": "1.0.0",
+      "description": "网易云音乐搜索和播放（4 个备选 API）"
+    },
+    {
+      "name": "QQ 音乐",
+      "url": "/plugins/qq.json",
+      "version": "1.0.0",
+      "description": "QQ 音乐搜索和播放（4 个备选 API）"
+    },
+    {
+      "name": "酷狗音乐",
+      "url": "/plugins/kugou.json",
+      "version": "1.0.0",
+      "description": "酷狗音乐搜索和播放（4 个备选 API）"
+    },
+    {
+      "name": "酷我音乐",
+      "url": "/plugins/kuwo.json",
+      "version": "1.0.0",
+      "description": "酷我音乐搜索和播放（4 个备选 API）"
+    }
+  ]
+}
