@@ -1,0 +1,79 @@
+{
+  "name": "酷我音乐",
+  "version": "1.0.0",
+  "description": "酷我音乐搜索和播放",
+  "author": "Music Free",
+  "homepage": "https://www.kuwo.cn",
+  "apis": [
+    {
+      "name": "搜索",
+      "url": "https://www.kuwo.cn/api/search?keyword={keyword}&pagesize=30",
+      "method": "GET",
+      "headers": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+      },
+      "dataPath": "data",
+      "mapping": {
+        "id": "id",
+        "name": "name",
+        "artist": "artist",
+        "album": "album",
+        "duration": "duration",
+        "cover": "pic"
+      }
+    },
+    {
+      "name": "搜索备选1",
+      "url": "https://kuwo-music-api.vercel.app/search?keyword={keyword}&pagesize=30",
+      "method": "GET",
+      "headers": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+      },
+      "dataPath": "data",
+      "mapping": {
+        "id": "id",
+        "name": "name",
+        "artist": "artist",
+        "album": "album",
+        "duration": "duration",
+        "cover": "pic"
+      }
+    },
+    {
+      "name": "搜索备选2",
+      "url": "https://api.kuwo.cn/search?keyword={keyword}&pagesize=30",
+      "method": "GET",
+      "headers": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+      },
+      "dataPath": "data",
+      "mapping": {
+        "id": "id",
+        "name": "name",
+        "artist": "artist",
+        "album": "album",
+        "duration": "duration",
+        "cover": "pic"
+      }
+    },
+    {
+      "name": "搜索备选3",
+      "url": "https://music.kuwo.cn/api/search?keyword={keyword}&pagesize=30",
+      "method": "GET",
+      "headers": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+      },
+      "dataPath": "data",
+      "mapping": {
+        "id": "id",
+        "name": "name",
+        "artist": "artist",
+        "album": "album",
+        "duration": "duration",
+        "cover": "pic"
+      }
+    }
+  ],
+  "playUrl": "https://www.kuwo.cn/api/url?id={id}",
+  "lyricUrl": "https://www.kuwo.cn/api/lyric?id={id}"
+}
