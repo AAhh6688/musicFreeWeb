@@ -1,0 +1,79 @@
+{
+  "name": "酷狗音乐",
+  "version": "1.0.0",
+  "description": "酷狗音乐搜索和播放",
+  "author": "Music Free",
+  "homepage": "https://www.kugou.com",
+  "apis": [
+    {
+      "name": "搜索",
+      "url": "https://kugoumusicapi.4everland.app/search?keyword={keyword}&pagesize=30",
+      "method": "GET",
+      "headers": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+      },
+      "dataPath": "data",
+      "mapping": {
+        "id": "id",
+        "name": "songName",
+        "artist": "singerName",
+        "album": "albumName",
+        "duration": "duration",
+        "cover": "imgUrl"
+      }
+    },
+    {
+      "name": "搜索备选1",
+      "url": "https://kugou-music-api.vercel.app/search?keyword={keyword}&pagesize=30",
+      "method": "GET",
+      "headers": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+      },
+      "dataPath": "data",
+      "mapping": {
+        "id": "id",
+        "name": "songName",
+        "artist": "singerName",
+        "album": "albumName",
+        "duration": "duration",
+        "cover": "imgUrl"
+      }
+    },
+    {
+      "name": "搜索备选2",
+      "url": "https://api.kugou.com/search?keyword={keyword}&pagesize=30",
+      "method": "GET",
+      "headers": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+      },
+      "dataPath": "data",
+      "mapping": {
+        "id": "id",
+        "name": "songName",
+        "artist": "singerName",
+        "album": "albumName",
+        "duration": "duration",
+        "cover": "imgUrl"
+      }
+    },
+    {
+      "name": "搜索备选3",
+      "url": "https://music.kugou.com/api/search?keyword={keyword}&pagesize=30",
+      "method": "GET",
+      "headers": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+      },
+      "dataPath": "data",
+      "mapping": {
+        "id": "id",
+        "name": "songName",
+        "artist": "singerName",
+        "album": "albumName",
+        "duration": "duration",
+        "cover": "imgUrl"
+      }
+    }
+  ],
+  "playUrl": "https://kugoumusicapi.4everland.app/url?songid={id}&hash={hash}",
+  "lyricUrl": "https://kugoumusicapi.4everland.app/lyric?songid={id}&hash={hash}"
+}
