@@ -1,0 +1,79 @@
+{
+  "name": "QQ 音乐",
+  "version": "1.0.0",
+  "description": "QQ 音乐搜索和播放",
+  "author": "Music Free",
+  "homepage": "https://music.qq.com",
+  "apis": [
+    {
+      "name": "搜索",
+      "url": "https://u.y.qq.com/cgi-bin/musicu.fcg?g_tk=5381&uin=0&format=json&data={\"comm\":{\"ct\":24},\"music.search.SearchCoverListPageFirstPage\":{\"method\":\"GetSearchCoverListFirstPage\",\"module\":\"music.search\",\"param\":{\"keyword\":\"{keyword}\",\"pagenum\":1,\"pagesize\":30,\"searchid\":\"\",\"searchtype\":0}}}",
+      "method": "GET",
+      "headers": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+      },
+      "dataPath": "music.search.SearchCoverListPageFirstPage.data.coverlist",
+      "mapping": {
+        "id": "id",
+        "name": "title",
+        "artist": "author",
+        "album": "album_title",
+        "duration": "duration",
+        "cover": "cover_pic"
+      }
+    },
+    {
+      "name": "搜索备选1",
+      "url": "https://qq-music-api.vercel.app/search?keyword={keyword}&pagesize=30",
+      "method": "GET",
+      "headers": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+      },
+      "dataPath": "data",
+      "mapping": {
+        "id": "id",
+        "name": "name",
+        "artist": "singer.0.name",
+        "album": "album.name",
+        "duration": "duration",
+        "cover": "album.mid"
+      }
+    },
+    {
+      "name": "搜索备选2",
+      "url": "https://qqmusic-api.vercel.app/search?keyword={keyword}&pagesize=30",
+      "method": "GET",
+      "headers": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+      },
+      "dataPath": "data",
+      "mapping": {
+        "id": "id",
+        "name": "name",
+        "artist": "singer.0.name",
+        "album": "album.name",
+        "duration": "duration",
+        "cover": "album.mid"
+      }
+    },
+    {
+      "name": "搜索备选3",
+      "url": "https://api.music.qq.com/search?keyword={keyword}&pagesize=30",
+      "method": "GET",
+      "headers": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+      },
+      "dataPath": "data",
+      "mapping": {
+        "id": "id",
+        "name": "name",
+        "artist": "singer.0.name",
+        "album": "album.name",
+        "duration": "duration",
+        "cover": "album.mid"
+      }
+    }
+  ],
+  "playUrl": "https://u.y.qq.com/cgi-bin/musicu.fcg?g_tk=5381&uin=0&format=json&data={\"req_0\":{\"module\":\"vkey.GetVkeyServer\",\"method\":\"CgiGetVkey\",\"param\":{\"guid\":\"ffffffff82def4ef\",\"songmid\":\"{id}\",\"songtype\":0,\"uin\":\"0\",\"loginflag\":0,\"platform\":\"20\"}},\"comm\":{\"uin\":0,\"format\":\"json\",\"ct\":24,\"cv\":0}}",
+      "lyricUrl": "https://u.y.qq.com/cgi-bin/musicu.fcg?g_tk=5381&uin=0&format=json&data={\"comm\":{\"ct\":24},\"lyric\":{\"method\":\"GetPlayLyricV1\",\"module\":\"music.service.KugouLyricService\",\"param\":{\"songmid\":\"{id}\",\"nobase64\":1}}}"
+}
