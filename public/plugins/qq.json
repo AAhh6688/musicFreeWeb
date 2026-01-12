@@ -1,133 +1,46 @@
-// QQ 音乐插件 - MusicFree 官方协议
-const musicSource = {
-  name: 'QQ 音乐',
-  version: '1.0.0',
-  platform: 'qq',
-  
-  // API 列表（自动切换）
-  apiList: [
-    'https://qq-music-api.vercel.app',
-    'https://qqmusic-api.vercel.app',
-    'https://api.music.qq.com',
-    'https://u.y.qq.com'
+{
+  "name": "QQ 音乐",
+  "version": "1.0.0",
+  "platform": "qq",
+  "description": "QQ 音乐搜索和播放（4个备选API，自动切换）",
+  "author": "Music Free",
+  "homepage": "https://music.qq.com",
+  "apiServers": [
+    "https://qq-music-api.vercel.app",
+    "https://qqmusic-api.vercel.app",
+    "https://api.music.qq.com",
+    "https://u.y.qq.com"
   ],
-  
-  // 搜索歌曲
-  async search(keyword) {
-    const limit = 30;
-    
-    for (let i = 0; i < this.apiList.length; i++) {
-      try {
-        const api = this.apiList[i];
-        const url = api + '/search?keyword=' + encodeURIComponent(keyword) + '&pagesize=' + limit;
-        
-        const response = await fetch(url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
-        });
-        
-        if (!response.ok) {
-          continue;
-        }
-        
-        const data = await response.json();
-        const songs = data.data ? data.data : [];
-        
-        const result = [];
-        for (let j = 0; j < songs.length; j++) {
-          const song = songs[j];
-          const artistName = song.singer && song.singer.length > 0 ? song.singer[0].name : 
-                            (song.ar && song.ar.length > 0 ? song.ar[0].name : '未知艺术家');
-          
-          result.push({
-            id: song.id ? String(song.id) : (song.mid ? String(song.mid) : ''),
-            title: song.name ? song.name : (song.title ? song.title : ''),
-            artist: artistName,
-            album: song.album && song.album.name ? song.album.name : (song.album ? song.album : '未知专辑'),
-            duration: song.duration ? Math.floor(song.duration / 1000) : 0,
-            cover: song.album && song.album.mid ? song.album.mid : (song.album && song.album.picUrl ? song.album.picUrl : ''),
-            platform: 'qq',
-            platformId: song.id ? String(song.id) : (song.mid ? String(song.mid) : ''),
-            url: '',
-            lyric: ''
-          });
-        }
-        
-        return result;
-      } catch (error) {
-        console.log('QQ 音乐 API #' + (i + 1) + ' 失败，尝试下一个...');
-        continue;
-      }
+  "searchApi": {
+    "method": "GET",
+    "url": "/search?keyword={keyword}&pagesize=30",
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    },
+    "dataPath": "data",
+    "itemMapping": {
+      "id": "id",
+      "title": "name",
+      "artist": "singer[0].name",
+      "album": "album.name",
+      "duration": "duration",
+      "cover": "album.mid"
     }
-    
-    throw new Error('所有 QQ 音乐 API 都失败了');
   },
-  
-  // 获取播放 URL
-  async getPlayUrl(songItem) {
-    for (let i = 0; i < this.apiList.length; i++) {
-      try {
-        const api = this.apiList[i];
-        const url = api + '/url?id=' + songItem.platformId + '&br=320000';
-        
-        const response = await fetch(url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
-        });
-        
-        if (!response.ok) {
-          continue;
-        }
-        
-        const data = await response.json();
-        const playUrl = data.data && data.data.url ? data.data.url : (data.url ? data.url : '');
-        
-        if (playUrl) {
-          return playUrl;
-        }
-      } catch (error) {
-        console.log('获取播放 URL 失败: ' + error.message);
-        continue;
-      }
-    }
-    
-    throw new Error('无法获取播放 URL');
+  "playUrlApi": {
+    "method": "GET",
+    "url": "/url?id={id}&br=320000",
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    },
+    "dataPath": "data.url"
   },
-  
-  // 获取歌词
-  async getLyric(songItem) {
-    for (let i = 0; i < this.apiList.length; i++) {
-      try {
-        const api = this.apiList[i];
-        const url = api + '/lyric?id=' + songItem.platformId;
-        
-        const response = await fetch(url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
-        });
-        
-        if (!response.ok) {
-          continue;
-        }
-        
-        const data = await response.json();
-        const lyric = data.lrc ? data.lrc : (data.lyric ? data.lyric : '');
-        
-        return lyric;
-      } catch (error) {
-        console.log('获取歌词失败: ' + error.message);
-        continue;
-      }
-    }
-    
-    return '';
+  "lyricApi": {
+    "method": "GET",
+    "url": "/lyric?id={id}",
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    },
+    "dataPath": "lrc"
   }
-};
-
-// 导出
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = musicSource;
 }
