@@ -1,131 +1,46 @@
-// 酷狗音乐插件 - 符合 MusicFree 官方协议
-const kugouMusicSource = {
-  name: '酷狗音乐',
-  version: '1.0.0',
-  platform: 'kugou',
-  
-  // API 列表（自动切换）
-  apiList: [
-    'https://kugoumusicapi.4everland.app',
-    'https://kugou-music-api.vercel.app',
-    'https://api.kugou.com',
-    'https://music.kugou.com/api'
+{
+  "name": "酷狗音乐",
+  "version": "1.0.0",
+  "platform": "kugou",
+  "description": "酷狗音乐搜索和播放（4个备选API，自动切换）",
+  "author": "Music Free",
+  "homepage": "https://www.kugou.com",
+  "apiServers": [
+    "https://kugoumusicapi.4everland.app",
+    "https://kugou-music-api.vercel.app",
+    "https://api.kugou.com",
+    "https://music.kugou.com/api"
   ],
-  
-  // 当前 API 索引
-  currentApiIndex: 0,
-  
-  // 获取当前可用的 API
-  getAvailableApi() {
-    return this.apiList[this.currentApiIndex];
-  },
-  
-  // 切换到下一个 API
-  switchToNextApi() {
-    this.currentApiIndex = (this.currentApiIndex + 1) % this.apiList.length;
-  },
-  
-  // 搜索歌曲
-  async search(keyword, options = {}) {
-    const limit = options.limit || 30;
-    
-    for (let i = 0; i < this.apiList.length; i++) {
-      try {
-        const api = this.apiList[i];
-        const response = await fetch(
-          `${api}/search?keyword=${encodeURIComponent(keyword)}&pagesize=${limit}`,
-          {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-          }
-        );
-        
-        if (!response.ok) continue;
-        
-        const data = await response.json();
-        const songs = data.data || [];
-        
-        return songs.map(song => ({
-          id: song.id?.toString() || '',
-          title: song.songName || song.name || '',
-          artist: song.singerName || song.artist || '未知艺术家',
-          album: song.albumName || song.album || '未知专辑',
-          duration: Math.floor((song.duration || 0) / 1000),
-          cover: song.imgUrl || song.cover || '',
-          platform: this.platform,
-          platformId: song.id?.toString() || '',
-          hash: song.hash || '',
-          url: '',
-          lyric: ''
-        }));
-      } catch (error) {
-        console.warn(`酷狗 API #${i + 1} 失败，尝试下一个...`);
-        continue;
-      }
+  "searchApi": {
+    "method": "GET",
+    "url": "/search?keyword={keyword}&pagesize=30",
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    },
+    "dataPath": "data",
+    "itemMapping": {
+      "id": "id",
+      "title": "songName",
+      "artist": "singerName",
+      "album": "albumName",
+      "duration": "duration",
+      "cover": "imgUrl"
     }
-    
-    throw new Error('所有酷狗 API 都失败了');
   },
-  
-  // 获取播放 URL
-  async getPlayUrl(songItem) {
-    for (const api of this.apiList) {
-      try {
-        const response = await fetch(
-          `${api}/url?songid=${songItem.platformId}&hash=${songItem.hash}`,
-          {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-          }
-        );
-        
-        if (!response.ok) continue;
-        
-        const data = await response.json();
-        const url = data.data?.url || data.url || '';
-        
-        if (url) {
-          return url;
-        }
-      } catch (error) {
-        console.warn(`获取播放 URL 失败: ${error.message}`);
-        continue;
-      }
-    }
-    
-    throw new Error('无法获取播放 URL');
+  "playUrlApi": {
+    "method": "GET",
+    "url": "/url?songid={id}&hash={hash}",
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    },
+    "dataPath": "data.url"
   },
-  
-  // 获取歌词
-  async getLyric(songItem) {
-    for (const api of this.apiList) {
-      try {
-        const response = await fetch(
-          `${api}/lyric?songid=${songItem.platformId}&hash=${songItem.hash}`,
-          {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-          }
-        );
-        
-        if (!response.ok) continue;
-        
-        const data = await response.json();
-        return data.data?.lyric || data.lyric || '';
-      } catch (error) {
-        console.warn(`获取歌词失败: ${error.message}`);
-        continue;
-      }
-    }
-    
-    return '';
+  "lyricApi": {
+    "method": "GET",
+    "url": "/lyric?songid={id}&hash={hash}",
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    },
+    "dataPath": "data.lyric"
   }
-};
-
-// 导出插件
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = kugouMusicSource;
 }
