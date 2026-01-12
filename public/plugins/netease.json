@@ -1,79 +1,130 @@
-{
-  "name": "网易云音乐",
-  "version": "1.0.0",
-  "description": "网易云音乐搜索和播放",
-  "author": "Music Free",
-  "homepage": "https://music.163.com",
-  "apis": [
-    {
-      "name": "搜索",
-      "url": "https://netease-cloud-music-api-ruby.vercel.app/search?keywords={keyword}&type=1&limit=30",
-      "method": "GET",
-      "headers": {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-      },
-      "dataPath": "result.songs",
-      "mapping": {
-        "id": "id",
-        "name": "name",
-        "artist": "artists.0.name",
-        "album": "album.name",
-        "duration": "duration",
-        "cover": "album.picUrl"
-      }
-    },
-    {
-      "name": "搜索备选1",
-      "url": "https://music-api.leanapp.cn/search?keywords={keyword}&type=1&limit=30",
-      "method": "GET",
-      "headers": {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-      },
-      "dataPath": "result.songs",
-      "mapping": {
-        "id": "id",
-        "name": "name",
-        "artist": "artists.0.name",
-        "album": "album.name",
-        "duration": "duration",
-        "cover": "album.picUrl"
-      }
-    },
-    {
-      "name": "搜索备选2",
-      "url": "https://netease-api.vercel.app/search?keywords={keyword}&type=1&limit=30",
-      "method": "GET",
-      "headers": {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-      },
-      "dataPath": "result.songs",
-      "mapping": {
-        "id": "id",
-        "name": "name",
-        "artist": "artists.0.name",
-        "album": "album.name",
-        "duration": "duration",
-        "cover": "album.picUrl"
-      }
-    },
-    {
-      "name": "搜索备选3",
-      "url": "https://api.netease.com/search?keywords={keyword}&type=1&limit=30",
-      "method": "GET",
-      "headers": {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-      },
-      "dataPath": "result.songs",
-      "mapping": {
-        "id": "id",
-        "name": "name",
-        "artist": "artists.0.name",
-        "album": "album.name",
-        "duration": "duration",
-        "cover": "album.picUrl"
+// 网易云音乐插件 - 符合 MusicFree 官方协议
+const neteaseMusicSource = {
+  name: '网易云音乐',
+  version: '1.0.0',
+  platform: 'netease',
+  
+  // API 列表（自动切换）
+  apiList: [
+    'https://netease-cloud-music-api-ruby.vercel.app',
+    'https://music-api.leanapp.cn',
+    'https://netease-api.vercel.app',
+    'https://api.netease.com'
+  ],
+  
+  // 当前 API 索引
+  currentApiIndex: 0,
+  
+  // 获取当前可用的 API
+  getAvailableApi() {
+    return this.apiList[this.currentApiIndex];
+  },
+  
+  // 切换到下一个 API
+  switchToNextApi() {
+    this.currentApiIndex = (this.currentApiIndex + 1) % this.apiList.length;
+  },
+  
+  // 搜索歌曲
+  async search(keyword, options = {}) {
+    const limit = options.limit || 30;
+    
+    for (let i = 0; i < this.apiList.length; i++) {
+      try {
+        const api = this.apiList[i];
+        const response = await fetch(
+          `${api}/search?keywords=${encodeURIComponent(keyword)}&type=1&limit=${limit}`,
+          {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+          }
+        );
+        
+        if (!response.ok) continue;
+        
+        const data = await response.json();
+        const songs = data.result?.songs || [];
+        
+        return songs.map(song => ({
+          id: song.id.toString(),
+          title: song.name,
+          artist: song.artists?.map(a => a.name).join(' / ') || '未知艺术家',
+          album: song.album?.name || '未知专辑',
+          duration: Math.floor((song.duration || 0) / 1000),
+          cover: song.album?.picUrl || '',
+          platform: this.platform,
+          platformId: song.id.toString(),
+          url: '',
+          lyric: ''
+        }));
+      } catch (error) {
+        console.warn(`网易云 API #${i + 1} 失败，尝试下一个...`);
+        continue;
       }
     }
-  ],
-  "playUrl": "https://netease-cloud-music-api-ruby.vercel.app/song/url?id={id}&br=320000",
-  "lyricUrl": "https://netease-cloud-music-api-ruby.vercel.app/lyric?id={id}"
+    
+    throw new Error('所有网易云 API 都失败了');
+  },
+  
+  // 获取播放 URL
+  async getPlayUrl(songItem) {
+    for (const api of this.apiList) {
+      try {
+        const response = await fetch(
+          `${api}/song/url?id=${songItem.platformId}&br=320000`,
+          {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+          }
+        );
+        
+        if (!response.ok) continue;
+        
+        const data = await response.json();
+        const url = data.data?.[0]?.url;
+        
+        if (url) {
+          return url;
+        }
+      } catch (error) {
+        console.warn(`获取播放 URL 失败: ${error.message}`);
+        continue;
+      }
+    }
+    
+    throw new Error('无法获取播放 URL');
+  },
+  
+  // 获取歌词
+  async getLyric(songItem) {
+    for (const api of this.apiList) {
+      try {
+        const response = await fetch(
+          `${api}/lyric?id=${songItem.platformId}`,
+          {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+          }
+        );
+        
+        if (!response.ok) continue;
+        
+        const data = await response.json();
+        return data.lrc?.lyric || '';
+      } catch (error) {
+        console.warn(`获取歌词失败: ${error.message}`);
+        continue;
+      }
+    }
+    
+    return '';
+  }
+};
+
+// 导出插件
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = neteaseMusicSource;
 }
