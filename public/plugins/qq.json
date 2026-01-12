@@ -1,5 +1,5 @@
-// QQ 音乐插件 - 符合 MusicFree 官方协议
-const qqMusicSource = {
+// QQ 音乐插件 - MusicFree 官方协议
+const musicSource = {
   name: 'QQ 音乐',
   version: '1.0.0',
   platform: 'qq',
@@ -12,55 +12,51 @@ const qqMusicSource = {
     'https://u.y.qq.com'
   ],
   
-  // 当前 API 索引
-  currentApiIndex: 0,
-  
-  // 获取当前可用的 API
-  getAvailableApi() {
-    return this.apiList[this.currentApiIndex];
-  },
-  
-  // 切换到下一个 API
-  switchToNextApi() {
-    this.currentApiIndex = (this.currentApiIndex + 1) % this.apiList.length;
-  },
-  
   // 搜索歌曲
-  async search(keyword, options = {}) {
-    const limit = options.limit || 30;
+  async search(keyword) {
+    const limit = 30;
     
     for (let i = 0; i < this.apiList.length; i++) {
       try {
         const api = this.apiList[i];
-        const response = await fetch(
-          `${api}/search?keyword=${encodeURIComponent(keyword)}&pagesize=${limit}`,
-          {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-          }
-        );
+        const url = api + '/search?keyword=' + encodeURIComponent(keyword) + '&pagesize=' + limit;
         
-        if (!response.ok) continue;
+        const response = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
+        
+        if (!response.ok) {
+          continue;
+        }
         
         const data = await response.json();
-        const songs = data.data || [];
+        const songs = data.data ? data.data : [];
         
-        return songs.map(song => ({
-          id: song.id?.toString() || song.mid?.toString() || '',
-          title: song.name || song.title || '',
-          artist: song.singer?.map(s => s.name).join(' / ') || 
-                  song.ar?.map(a => a.name).join(' / ') || '未知艺术家',
-          album: song.album?.name || song.album || '未知专辑',
-          duration: Math.floor((song.duration || 0) / 1000),
-          cover: song.album?.mid || song.album?.picUrl || '',
-          platform: this.platform,
-          platformId: song.id?.toString() || song.mid?.toString() || '',
-          url: '',
-          lyric: ''
-        }));
+        const result = [];
+        for (let j = 0; j < songs.length; j++) {
+          const song = songs[j];
+          const artistName = song.singer && song.singer.length > 0 ? song.singer[0].name : 
+                            (song.ar && song.ar.length > 0 ? song.ar[0].name : '未知艺术家');
+          
+          result.push({
+            id: song.id ? String(song.id) : (song.mid ? String(song.mid) : ''),
+            title: song.name ? song.name : (song.title ? song.title : ''),
+            artist: artistName,
+            album: song.album && song.album.name ? song.album.name : (song.album ? song.album : '未知专辑'),
+            duration: song.duration ? Math.floor(song.duration / 1000) : 0,
+            cover: song.album && song.album.mid ? song.album.mid : (song.album && song.album.picUrl ? song.album.picUrl : ''),
+            platform: 'qq',
+            platformId: song.id ? String(song.id) : (song.mid ? String(song.mid) : ''),
+            url: '',
+            lyric: ''
+          });
+        }
+        
+        return result;
       } catch (error) {
-        console.warn(`QQ 音乐 API #${i + 1} 失败，尝试下一个...`);
+        console.log('QQ 音乐 API #' + (i + 1) + ' 失败，尝试下一个...');
         continue;
       }
     }
@@ -70,27 +66,29 @@ const qqMusicSource = {
   
   // 获取播放 URL
   async getPlayUrl(songItem) {
-    for (const api of this.apiList) {
+    for (let i = 0; i < this.apiList.length; i++) {
       try {
-        const response = await fetch(
-          `${api}/url?id=${songItem.platformId}&br=320000`,
-          {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-          }
-        );
+        const api = this.apiList[i];
+        const url = api + '/url?id=' + songItem.platformId + '&br=320000';
         
-        if (!response.ok) continue;
+        const response = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
+        
+        if (!response.ok) {
+          continue;
+        }
         
         const data = await response.json();
-        const url = data.data?.url || data.url || '';
+        const playUrl = data.data && data.data.url ? data.data.url : (data.url ? data.url : '');
         
-        if (url) {
-          return url;
+        if (playUrl) {
+          return playUrl;
         }
       } catch (error) {
-        console.warn(`获取播放 URL 失败: ${error.message}`);
+        console.log('获取播放 URL 失败: ' + error.message);
         continue;
       }
     }
@@ -100,23 +98,27 @@ const qqMusicSource = {
   
   // 获取歌词
   async getLyric(songItem) {
-    for (const api of this.apiList) {
+    for (let i = 0; i < this.apiList.length; i++) {
       try {
-        const response = await fetch(
-          `${api}/lyric?id=${songItem.platformId}`,
-          {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-          }
-        );
+        const api = this.apiList[i];
+        const url = api + '/lyric?id=' + songItem.platformId;
         
-        if (!response.ok) continue;
+        const response = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
+        
+        if (!response.ok) {
+          continue;
+        }
         
         const data = await response.json();
-        return data.lrc || data.lyric || '';
+        const lyric = data.lrc ? data.lrc : (data.lyric ? data.lyric : '');
+        
+        return lyric;
       } catch (error) {
-        console.warn(`获取歌词失败: ${error.message}`);
+        console.log('获取歌词失败: ' + error.message);
         continue;
       }
     }
@@ -125,7 +127,7 @@ const qqMusicSource = {
   }
 };
 
-// 导出插件
+// 导出
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = qqMusicSource;
+  module.exports = musicSource;
 }
