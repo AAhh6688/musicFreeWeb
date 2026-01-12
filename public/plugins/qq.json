@@ -1,79 +1,131 @@
-{
-  "name": "QQ 音乐",
-  "version": "1.0.0",
-  "description": "QQ 音乐搜索和播放",
-  "author": "Music Free",
-  "homepage": "https://music.qq.com",
-  "apis": [
-    {
-      "name": "搜索",
-      "url": "https://u.y.qq.com/cgi-bin/musicu.fcg?g_tk=5381&uin=0&format=json&data={\"comm\":{\"ct\":24},\"music.search.SearchCoverListPageFirstPage\":{\"method\":\"GetSearchCoverListFirstPage\",\"module\":\"music.search\",\"param\":{\"keyword\":\"{keyword}\",\"pagenum\":1,\"pagesize\":30,\"searchid\":\"\",\"searchtype\":0}}}",
-      "method": "GET",
-      "headers": {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-      },
-      "dataPath": "music.search.SearchCoverListPageFirstPage.data.coverlist",
-      "mapping": {
-        "id": "id",
-        "name": "title",
-        "artist": "author",
-        "album": "album_title",
-        "duration": "duration",
-        "cover": "cover_pic"
-      }
-    },
-    {
-      "name": "搜索备选1",
-      "url": "https://qq-music-api.vercel.app/search?keyword={keyword}&pagesize=30",
-      "method": "GET",
-      "headers": {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-      },
-      "dataPath": "data",
-      "mapping": {
-        "id": "id",
-        "name": "name",
-        "artist": "singer.0.name",
-        "album": "album.name",
-        "duration": "duration",
-        "cover": "album.mid"
-      }
-    },
-    {
-      "name": "搜索备选2",
-      "url": "https://qqmusic-api.vercel.app/search?keyword={keyword}&pagesize=30",
-      "method": "GET",
-      "headers": {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-      },
-      "dataPath": "data",
-      "mapping": {
-        "id": "id",
-        "name": "name",
-        "artist": "singer.0.name",
-        "album": "album.name",
-        "duration": "duration",
-        "cover": "album.mid"
-      }
-    },
-    {
-      "name": "搜索备选3",
-      "url": "https://api.music.qq.com/search?keyword={keyword}&pagesize=30",
-      "method": "GET",
-      "headers": {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-      },
-      "dataPath": "data",
-      "mapping": {
-        "id": "id",
-        "name": "name",
-        "artist": "singer.0.name",
-        "album": "album.name",
-        "duration": "duration",
-        "cover": "album.mid"
+// QQ 音乐插件 - 符合 MusicFree 官方协议
+const qqMusicSource = {
+  name: 'QQ 音乐',
+  version: '1.0.0',
+  platform: 'qq',
+  
+  // API 列表（自动切换）
+  apiList: [
+    'https://qq-music-api.vercel.app',
+    'https://qqmusic-api.vercel.app',
+    'https://api.music.qq.com',
+    'https://u.y.qq.com'
+  ],
+  
+  // 当前 API 索引
+  currentApiIndex: 0,
+  
+  // 获取当前可用的 API
+  getAvailableApi() {
+    return this.apiList[this.currentApiIndex];
+  },
+  
+  // 切换到下一个 API
+  switchToNextApi() {
+    this.currentApiIndex = (this.currentApiIndex + 1) % this.apiList.length;
+  },
+  
+  // 搜索歌曲
+  async search(keyword, options = {}) {
+    const limit = options.limit || 30;
+    
+    for (let i = 0; i < this.apiList.length; i++) {
+      try {
+        const api = this.apiList[i];
+        const response = await fetch(
+          `${api}/search?keyword=${encodeURIComponent(keyword)}&pagesize=${limit}`,
+          {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+          }
+        );
+        
+        if (!response.ok) continue;
+        
+        const data = await response.json();
+        const songs = data.data || [];
+        
+        return songs.map(song => ({
+          id: song.id?.toString() || song.mid?.toString() || '',
+          title: song.name || song.title || '',
+          artist: song.singer?.map(s => s.name).join(' / ') || 
+                  song.ar?.map(a => a.name).join(' / ') || '未知艺术家',
+          album: song.album?.name || song.album || '未知专辑',
+          duration: Math.floor((song.duration || 0) / 1000),
+          cover: song.album?.mid || song.album?.picUrl || '',
+          platform: this.platform,
+          platformId: song.id?.toString() || song.mid?.toString() || '',
+          url: '',
+          lyric: ''
+        }));
+      } catch (error) {
+        console.warn(`QQ 音乐 API #${i + 1} 失败，尝试下一个...`);
+        continue;
       }
     }
-  ],
-  "playUrl": "https://u.y.qq.com/cgi-bin/musicu.fcg?g_tk=5381&uin=0&format=json&data={\"req_0\":{\"module\":\"vkey.GetVkeyServer\",\"method\":\"CgiGetVkey\",\"param\":{\"guid\":\"ffffffff82def4ef\",\"songmid\":\"{id}\",\"songtype\":0,\"uin\":\"0\",\"loginflag\":0,\"platform\":\"20\"}},\"comm\":{\"uin\":0,\"format\":\"json\",\"ct\":24,\"cv\":0}}",
-      "lyricUrl": "https://u.y.qq.com/cgi-bin/musicu.fcg?g_tk=5381&uin=0&format=json&data={\"comm\":{\"ct\":24},\"lyric\":{\"method\":\"GetPlayLyricV1\",\"module\":\"music.service.KugouLyricService\",\"param\":{\"songmid\":\"{id}\",\"nobase64\":1}}}"
+    
+    throw new Error('所有 QQ 音乐 API 都失败了');
+  },
+  
+  // 获取播放 URL
+  async getPlayUrl(songItem) {
+    for (const api of this.apiList) {
+      try {
+        const response = await fetch(
+          `${api}/url?id=${songItem.platformId}&br=320000`,
+          {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+          }
+        );
+        
+        if (!response.ok) continue;
+        
+        const data = await response.json();
+        const url = data.data?.url || data.url || '';
+        
+        if (url) {
+          return url;
+        }
+      } catch (error) {
+        console.warn(`获取播放 URL 失败: ${error.message}`);
+        continue;
+      }
+    }
+    
+    throw new Error('无法获取播放 URL');
+  },
+  
+  // 获取歌词
+  async getLyric(songItem) {
+    for (const api of this.apiList) {
+      try {
+        const response = await fetch(
+          `${api}/lyric?id=${songItem.platformId}`,
+          {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+          }
+        );
+        
+        if (!response.ok) continue;
+        
+        const data = await response.json();
+        return data.lrc || data.lyric || '';
+      } catch (error) {
+        console.warn(`获取歌词失败: ${error.message}`);
+        continue;
+      }
+    }
+    
+    return '';
+  }
+};
+
+// 导出插件
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = qqMusicSource;
 }
