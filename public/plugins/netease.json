@@ -1,10 +1,22 @@
 // 网易云音乐插件 - MusicFree 官方协议
+interface SongItem {
+  id: string;
+  title: string;
+  artist: string;
+  album: string;
+  duration: number;
+  cover: string;
+  platform: string;
+  platformId: string;
+  url?: string;
+  lyric?: string;
+}
+
 const musicSource = {
   name: '网易云音乐',
   version: '1.0.0',
   platform: 'netease',
   
-  // API 列表（自动切换）
   apiList: [
     'https://netease-cloud-music-api-ruby.vercel.app',
     'https://music-api.leanapp.cn',
@@ -12,14 +24,13 @@ const musicSource = {
     'https://api.netease.com'
   ],
   
-  // 搜索歌曲
-  async search(keyword) {
+  async search(keyword: string): Promise<SongItem[]> {
     const limit = 30;
     
     for (let i = 0; i < this.apiList.length; i++) {
       try {
         const api = this.apiList[i];
-        const url = api + '/search?keywords=' + encodeURIComponent(keyword) + '&type=1&limit=' + limit;
+        const url = `${api}/search?keywords=${encodeURIComponent(keyword)}&type=1&limit=${limit}`;
         
         const response = await fetch(url, {
           headers: {
@@ -32,28 +43,22 @@ const musicSource = {
         }
         
         const data = await response.json();
-        const songs = data.result && data.result.songs ? data.result.songs : [];
+        const songs = data.result?.songs || [];
         
-        const result = [];
-        for (let j = 0; j < songs.length; j++) {
-          const song = songs[j];
-          result.push({
-            id: String(song.id),
-            title: song.name,
-            artist: song.artists && song.artists.length > 0 ? song.artists[0].name : '未知艺术家',
-            album: song.album && song.album.name ? song.album.name : '未知专辑',
-            duration: song.duration ? Math.floor(song.duration / 1000) : 0,
-            cover: song.album && song.album.picUrl ? song.album.picUrl : '',
-            platform: 'netease',
-            platformId: String(song.id),
-            url: '',
-            lyric: ''
-          });
-        }
-        
-        return result;
+        return songs.map((song: any) => ({
+          id: String(song.id),
+          title: song.name,
+          artist: song.artists?.[0]?.name || '未知艺术家',
+          album: song.album?.name || '未知专辑',
+          duration: Math.floor((song.duration || 0) / 1000),
+          cover: song.album?.picUrl || '',
+          platform: 'netease',
+          platformId: String(song.id),
+          url: '',
+          lyric: ''
+        }));
       } catch (error) {
-        console.log('网易云 API #' + (i + 1) + ' 失败，尝试下一个...');
+        console.warn(`网易云 API #${i + 1} 失败，尝试下一个...`);
         continue;
       }
     }
@@ -61,12 +66,10 @@ const musicSource = {
     throw new Error('所有网易云 API 都失败了');
   },
   
-  // 获取播放 URL
-  async getPlayUrl(songItem) {
-    for (let i = 0; i < this.apiList.length; i++) {
+  async getPlayUrl(songItem: SongItem): Promise<string> {
+    for (const api of this.apiList) {
       try {
-        const api = this.apiList[i];
-        const url = api + '/song/url?id=' + songItem.platformId + '&br=320000';
+        const url = `${api}/song/url?id=${songItem.platformId}&br=320000`;
         
         const response = await fetch(url, {
           headers: {
@@ -79,13 +82,13 @@ const musicSource = {
         }
         
         const data = await response.json();
-        const playUrl = data.data && data.data.length > 0 && data.data[0].url ? data.data[0].url : '';
+        const playUrl = data.data?.[0]?.url || '';
         
         if (playUrl) {
           return playUrl;
         }
       } catch (error) {
-        console.log('获取播放 URL 失败: ' + error.message);
+        console.warn(`获取播放 URL 失败: ${error}`);
         continue;
       }
     }
@@ -93,12 +96,10 @@ const musicSource = {
     throw new Error('无法获取播放 URL');
   },
   
-  // 获取歌词
-  async getLyric(songItem) {
-    for (let i = 0; i < this.apiList.length; i++) {
+  async getLyric(songItem: SongItem): Promise<string> {
+    for (const api of this.apiList) {
       try {
-        const api = this.apiList[i];
-        const url = api + '/lyric?id=' + songItem.platformId;
+        const url = `${api}/lyric?id=${songItem.platformId}`;
         
         const response = await fetch(url, {
           headers: {
@@ -111,11 +112,9 @@ const musicSource = {
         }
         
         const data = await response.json();
-        const lyric = data.lrc && data.lrc.lyric ? data.lrc.lyric : '';
-        
-        return lyric;
+        return data.lrc?.lyric || '';
       } catch (error) {
-        console.log('获取歌词失败: ' + error.message);
+        console.warn(`获取歌词失败: ${error}`);
         continue;
       }
     }
@@ -124,7 +123,4 @@ const musicSource = {
   }
 };
 
-// 导出
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = musicSource;
-}
+export default musicSource;
