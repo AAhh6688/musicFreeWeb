@@ -1,126 +1,46 @@
-// 网易云音乐插件 - MusicFree 官方协议
-interface SongItem {
-  id: string;
-  title: string;
-  artist: string;
-  album: string;
-  duration: number;
-  cover: string;
-  platform: string;
-  platformId: string;
-  url?: string;
-  lyric?: string;
-}
-
-const musicSource = {
-  name: '网易云音乐',
-  version: '1.0.0',
-  platform: 'netease',
-  
-  apiList: [
-    'https://netease-cloud-music-api-ruby.vercel.app',
-    'https://music-api.leanapp.cn',
-    'https://netease-api.vercel.app',
-    'https://api.netease.com'
+{
+  "name": "网易云音乐",
+  "version": "1.0.0",
+  "platform": "netease",
+  "description": "网易云音乐搜索和播放（4个备选API，自动切换）",
+  "author": "Music Free",
+  "homepage": "https://music.163.com",
+  "apiServers": [
+    "https://netease-cloud-music-api-ruby.vercel.app",
+    "https://music-api.leanapp.cn",
+    "https://netease-api.vercel.app",
+    "https://api.netease.com"
   ],
-  
-  async search(keyword: string): Promise<SongItem[]> {
-    const limit = 30;
-    
-    for (let i = 0; i < this.apiList.length; i++) {
-      try {
-        const api = this.apiList[i];
-        const url = `${api}/search?keywords=${encodeURIComponent(keyword)}&type=1&limit=${limit}`;
-        
-        const response = await fetch(url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
-        });
-        
-        if (!response.ok) {
-          continue;
-        }
-        
-        const data = await response.json();
-        const songs = data.result?.songs || [];
-        
-        return songs.map((song: any) => ({
-          id: String(song.id),
-          title: song.name,
-          artist: song.artists?.[0]?.name || '未知艺术家',
-          album: song.album?.name || '未知专辑',
-          duration: Math.floor((song.duration || 0) / 1000),
-          cover: song.album?.picUrl || '',
-          platform: 'netease',
-          platformId: String(song.id),
-          url: '',
-          lyric: ''
-        }));
-      } catch (error) {
-        console.warn(`网易云 API #${i + 1} 失败，尝试下一个...`);
-        continue;
-      }
+  "searchApi": {
+    "method": "GET",
+    "url": "/search?keywords={keyword}&type=1&limit=30",
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    },
+    "dataPath": "result.songs",
+    "itemMapping": {
+      "id": "id",
+      "title": "name",
+      "artist": "artists[0].name",
+      "album": "album.name",
+      "duration": "duration",
+      "cover": "album.picUrl"
     }
-    
-    throw new Error('所有网易云 API 都失败了');
   },
-  
-  async getPlayUrl(songItem: SongItem): Promise<string> {
-    for (const api of this.apiList) {
-      try {
-        const url = `${api}/song/url?id=${songItem.platformId}&br=320000`;
-        
-        const response = await fetch(url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
-        });
-        
-        if (!response.ok) {
-          continue;
-        }
-        
-        const data = await response.json();
-        const playUrl = data.data?.[0]?.url || '';
-        
-        if (playUrl) {
-          return playUrl;
-        }
-      } catch (error) {
-        console.warn(`获取播放 URL 失败: ${error}`);
-        continue;
-      }
-    }
-    
-    throw new Error('无法获取播放 URL');
+  "playUrlApi": {
+    "method": "GET",
+    "url": "/song/url?id={id}&br=320000",
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    },
+    "dataPath": "data[0].url"
   },
-  
-  async getLyric(songItem: SongItem): Promise<string> {
-    for (const api of this.apiList) {
-      try {
-        const url = `${api}/lyric?id=${songItem.platformId}`;
-        
-        const response = await fetch(url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
-        });
-        
-        if (!response.ok) {
-          continue;
-        }
-        
-        const data = await response.json();
-        return data.lrc?.lyric || '';
-      } catch (error) {
-        console.warn(`获取歌词失败: ${error}`);
-        continue;
-      }
-    }
-    
-    return '';
+  "lyricApi": {
+    "method": "GET",
+    "url": "/lyric?id={id}",
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    },
+    "dataPath": "lrc.lyric"
   }
-};
-
-export default musicSource;
+}
