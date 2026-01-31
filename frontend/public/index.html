@@ -1,43 +1,308 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" href="favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    />
-    <link rel="apple-touch-icon" href="logo192.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
-    <link rel="manifest" href="manifest.json" />
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MusicFree - 多音源在线播放器</title>
+  <!-- 响应式样式库 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+  <style>
+    /* 全局样式 - 手机优先适配 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent; /* 去除手机点击高亮 */
+    }
+    body {
+      padding: 10px;
+      max-width: 100%;
+      min-height: 100vh;
+      background-color: #f5f7fa;
+      font-size: 14px; /* 手机默认字号 */
+    }
+    /* API配置区 - 手机适配 */
+    .api-config {
+      background: white;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.08);
+    }
+    .api-config h5 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #333;
+    }
+    /* 音源选择器 - 手机优化 */
+    .form-select, .form-control {
+      font-size: 14px;
+      height: 40px;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+    .form-label {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 6px;
+    }
+    /* 搜索按钮 - 手机适配 */
+    .btn-primary {
+      background-color: #4096ff;
+      border: none;
+      border-radius: 8px;
+      height: 40px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .btn-primary:active {
+      background-color: #3088ff;
+    }
+    /* 音乐列表 - 手机滚动优化 */
+    .music-list {
+      background: white;
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.08);
+      max-height: calc(100vh - 280px); /* 适配手机屏幕高度 */
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch; /* 手机顺滑滚动 */
+    }
+    .music-item {
+      padding: 12px 8px;
+      border-bottom: 1px solid #f0f2f5;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .music-item:last-child {
+      border-bottom: none;
+    }
+    .music-item:hover, .music-item:active {
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding-left: 12px;
+      transition: all 0.2s ease;
+    }
+    .music-name {
+      font-size: 15px;
+      color: #333;
+      font-weight: 500;
+    }
+    .music-singer {
+      font-size: 12px;
+      color: #999;
+    }
+    /* 播放器 - 手机全屏适配 */
+    .audio-player {
+      width: 100%;
+      margin-top: 15px;
+      height: 50px;
+      border-radius: 8px;
+    }
+    /* 加载/空状态 */
+    .empty-state, .loading-state {
+      text-align: center;
+      padding: 30px 0;
+      color: #999;
+      font-size: 14px;
+    }
+    /* 媒体查询 - 平板/电脑适配 */
+    @media (min-width: 768px) {
+      body {
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+        font-size: 16px;
+      }
+      .api-config {
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+      .music-list {
+        max-height: 500px;
+        padding: 20px;
+      }
+      .music-item {
+        padding: 15px 10px;
+      }
+      .music-name {
+        font-size: 16px;
+      }
+      .music-singer {
+        font-size: 13px;
+      }
+      .audio-player {
+        height: 60px;
+        margin-top: 20px;
+      }
+    }
+    /* 隐藏滚动条（手机端更美观） */
+    .music-list::-webkit-scrollbar {
+      width: 4px;
+    }
+    .music-list::-webkit-scrollbar-thumb {
+      background-color: #e0e0e0;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-fluid p-0">
+    <!-- 1. 音源API配置区（集成所有指定音源） -->
+    <div class="api-config">
+      <h5>音源接口选择</h5>
+      <div class="row mb-3">
+        <div class="col-12 mb-2">
+          <label class="form-label">内置音源库（点击选择）：</label>
+          <select id="apiSelector" class="form-select w-100">
+            <!-- 插件列表类音源 -->
+            <option value="https://musicfreepluginshub.2020818.xyz/plugins.json" selected>综合音源库1（plugins.json）</option>
+            <option value="https://fastly.jsdelivr.net/gh/Huibq/keep-alive/Music_Free/myPlugins.json">综合音源库2（myPlugins.json）</option>
+            <option value="https://gitlab.com/acoolbook/musicfree/-/raw/main/music.json">综合音源库3（music.json）</option>
+            <option value="https://raw.githubusercontent.com/maotoumao/MusicFreePlugins/master/plugins.json">官方插件库（plugins.json）</option>
+            <!-- 单个平台音源 -->
+            <option value="https://cdn.jsdelivr.net/gh/maotoumao/MusicFreePlugins@master/kuwo.js">酷我音乐（kuwo.js）</option>
+            <option value="https://cdn.jsdelivr.net/gh/maotoumao/MusicFreePlugins@master/netease.js">网易云音乐（netease.js）</option>
+            <option value="https://cdn.jsdelivr.net/gh/maotoumao/MusicFreePlugins@master/qq.js">QQ音乐（qq.js）</option>
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="form-label">自定义音源（可选）：</label>
+          <input type="text" id="customApi" class="form-control w-100" placeholder="输入自定义音源地址（如：https://xxx.json）" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-12">
+          <label class="form-label">搜索歌曲/歌手：</label>
+          <div class="input-group">
+            <input type="text" id="searchInput" class="form-control" placeholder="例如：周杰伦 晴天" />
+            <button id="searchBtn" class="btn btn-primary">搜索</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>React App</title>
-  </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
+    <!-- 2. 音乐列表展示区 -->
+    <div class="music-list" id="musicList">
+      <div class="empty-state">请选择音源并输入关键词搜索</div>
+    </div>
 
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
+    <!-- 3. 音频播放器（手机/电脑自适应） -->
+    <audio id="audioPlayer" class="audio-player" controls autoplay></audio>
+  </div>
 
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
-  </body>
+  <!-- 引入JS依赖 -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // === 核心变量 ===
+    const apiSelector = document.getElementById('apiSelector');
+    const customApi = document.getElementById('customApi');
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const musicList = document.getElementById('musicList');
+    const audioPlayer = document.getElementById('audioPlayer');
+    // 替换为你的Cloudflare Workers代理域名（部署后修改）
+    const proxyDomain = 'https://music-proxy.your-name.workers.dev';
+
+    // === 搜索逻辑 ===
+    searchBtn.addEventListener('click', async () => {
+      // 1. 获取输入和选择的音源
+      const keyword = searchInput.value.trim();
+      let selectedApi = apiSelector.value;
+      if (customApi.value.trim()) {
+        selectedApi = customApi.value.trim();
+      }
+
+      // 2. 校验
+      if (!keyword) {
+        alert('请输入要搜索的歌曲/歌手名！');
+        return;
+      }
+      if (!selectedApi) {
+        alert('请选择或输入音源地址！');
+        return;
+      }
+
+      // 3. 加载状态
+      musicList.innerHTML = '<div class="loading-state">正在搜索音源...</div>';
+
+      try {
+        // 4. 调用CF Workers代理（解决跨域）
+        const response = await fetch(
+          `${proxyDomain}/fetch-music?source=${encodeURIComponent(selectedApi)}&keyword=${encodeURIComponent(keyword)}`
+        );
+        
+        if (!response.ok) throw new Error(`请求失败（${response.status}）`);
+        const musicData = await response.json();
+
+        // 5. 渲染列表
+        renderMusicList(musicData);
+      } catch (error) {
+        musicList.innerHTML = `<div class="empty-state text-danger">搜索失败：${error.message}</div>`;
+        console.error('搜索错误：', error);
+      }
+    });
+
+    // === 渲染音乐列表 ===
+    function renderMusicList(data) {
+      // 兼容不同音源的返回格式
+      let songs = [];
+      // 处理插件列表JSON格式
+      if (Array.isArray(data) && data.length > 0) {
+        songs = data;
+      } else if (data.songs || data.data) {
+        songs = data.songs || data.data;
+      }
+
+      if (!songs || songs.length === 0) {
+        musicList.innerHTML = '<div class="empty-state">未找到相关歌曲</div>';
+        return;
+      }
+
+      // 拼接列表HTML
+      let listHtml = '';
+      songs.forEach((song, index) => {
+        // 兼容不同音源的字段名
+        const songName = song.name || song.title || '未知歌曲';
+        const singer = song.singer || song.artist || song.author || '未知歌手';
+        const playUrl = song.url || song.playUrl || song.audioUrl || '';
+
+        listHtml += `
+          <div class="music-item" data-url="${playUrl}">
+            <div class="music-name">${index + 1}. ${songName}</div>
+            <div class="music-singer">${singer}</div>
+          </div>
+        `;
+      });
+
+      musicList.innerHTML = listHtml;
+
+      // 绑定播放事件（手机点击/电脑 hover 都触发）
+      document.querySelectorAll('.music-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const playUrl = item.getAttribute('data-url');
+          if (playUrl) {
+            audioPlayer.src = playUrl;
+            // 手机端自动播放兼容
+            audioPlayer.play().catch(err => {
+              alert('播放失败：请手动点击播放器播放（手机浏览器限制）');
+              console.error('播放错误：', err);
+            });
+          } else {
+            alert('该歌曲无播放地址！');
+          }
+        });
+      });
+    }
+
+    // === 手机端回车搜索 ===
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') searchBtn.click();
+    });
+  </script>
+</body>
 </html>
